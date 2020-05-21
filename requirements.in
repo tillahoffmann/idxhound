@@ -1,0 +1,5 @@
+-e file:.[tests]
+flake8
+pytest
+pytest-cov
+sphinx
