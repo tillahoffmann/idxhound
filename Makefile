@@ -1,7 +1,8 @@
-.PHONY : clean docs lint tests
+.PHONY : clean dist docs lint tests
 
 # Build documentation, lint the code, and run tests
-build : docs lint tests
+build : setup.py docs lint tests
+	python setup.py sdist
 
 lint :
 	flake8
