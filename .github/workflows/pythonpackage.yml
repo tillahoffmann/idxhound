@@ -29,7 +29,12 @@ jobs:
     - name: Build docs, lint, and test
       run: make build
     - name: Publish package
-      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      # Only publish with one python version
+      # (cf. https://github.com/pypa/gh-action-pypi-publish/issues/16#issuecomment-557827529)
+      if: >-
+        matrix.python-version == '3.8'
+        && github.event_name == 'push'
+        && startsWith(github.event.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
