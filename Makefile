@@ -3,6 +3,7 @@
 # Build documentation, lint the code, and run tests
 build : setup.py docs lint tests
 	python setup.py sdist
+	twine check dist/*.tar.gz
 
 lint :
 	flake8
