@@ -87,6 +87,18 @@ London and Berlin would end up in last and second to last position in the ordere
 >>> obj.inverse[0]
 'Paris'
 
+Named columns
+^^^^^^^^^^^^^
+
+Because :py:class:`idxhound.Selection` is agnostic to the dimensions of the tensor being indexed, it can also be used to select named columns.
+
+>>> latitude = [41.9028, 52.5200, 48.8566, 51.5074]
+>>> longitude = [12.4964, 13.4050, 2.3522, 0.1278]
+>>> data = np.transpose([population, latitude, longitude])
+>>> columns = idxhound.Selection(['population', 'latitude', 'longitude'])
+>>> data[mapping['Berlin'], columns[['latitude', 'longitude']]]
+array([52.52 , 13.405])
+
 Properties
 ----------
 
