@@ -1,6 +1,15 @@
 🐶 idxhound
 ===========
 
+.. image:: https://github.com/tillahoffmann/idxhound/workflows/Python%20package/badge.svg
+  :target: https://github.com/tillahoffmann/idxhound/actions?query=workflow%3A%22Python+package%22
+
+.. image:: https://img.shields.io/pypi/v/idxhound.svg?style=flat-square
+   :target: https://pypi.python.org/pypi/idxhound
+
+.. image:: https://readthedocs.org/projects/idxhound/badge/?version=latest
+  :target: https://idxhound.readthedocs.io/en/latest/?badge=latest
+
 ``numpy`` provides outstanding indexing through its advanced indexing capabilities [1]_. ``idxhound`` tracks indices across one or more selections to make sure you always know where your data (in the form of array elements) came from.
 
 Alternatives include :py:class:`pandas.Index` and :py:class:`xarray.DataArray` which allow for indices other than monotonic integers. But sometimes one just wants to deal with the raw data arrays, e.g. to avoid any impact on performance or integrate with third-party libraries that expect raw numpy arrays. That's where ``idxhound`` can help.
