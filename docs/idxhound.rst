@@ -1,5 +1,5 @@
 idxhound package
 ================
 
-.. autoclass:: idxhound.Selection
+.. automodule:: idxhound
    :members:

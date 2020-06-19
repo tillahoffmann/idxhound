@@ -95,9 +95,92 @@ class Selection(bidict.FrozenOrderedBidict):
 
         Examples
         --------
-        Create a mapping from a sequence of characters.
-
         >>> idxhound.Selection.from_iterable('abc')
         Selection([('a', 0), ('b', 1), ('c', 2)])
         """
         return cls([(x, i) for i, x in enumerate(keys)], mapping=True)
+
+
+def array_to_dict(x, *objects, squeeze=True):
+    """
+    Convert an array to a dictionary of key-value pairs.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Array to convert.
+    *objects : iterable[Selection]
+        Selection objects corresponding to the axes of the array.
+    squeeze : bool
+        If ``True``, return a simple key when the array is one-dimensional. If ``False``, a
+        :py:class:`tuple` with one element is returned (cf. :py:func:`dict_to_array`).
+
+    Returns
+    -------
+    d : dict
+        Dictionary of key-value pairs encoding the array.
+
+    Example
+    -------
+    >>> cities = ['Rome', 'Berlin', 'Paris', 'London']
+    >>> population = [2.873, 3.769, 2.148, 8.982]
+    >>> idxhound.array_to_dict(population, idxhound.Selection(cities))
+    {'Rome': 2.873, 'Berlin': 3.769, 'Paris': 2.148, 'London': 8.982}
+    """
+    x = np.asarray(x)
+    if x.ndim != len(objects):
+        raise ValueError('dimension of `x` and `objects` must match')
+    # Get indices with shape `(ndim, prod(shape))`
+    idx = np.reshape(np.indices(x.shape), (x.ndim, -1))
+    # Map to the original space and transpose if necessary
+    idx = [obj.inverse[i] for i, obj in zip(idx, objects)]
+    if x.ndim == 1 and squeeze:
+        idx, = idx
+    else:
+        idx = zip(*idx)
+    return dict(zip(idx, x.ravel()))
+
+
+def dict_to_array(d, *objects, fill_value=np.nan, dtype=None, squeezed=True):
+    """
+    Convert a dictionary of key-value pairs to an array.
+
+    Parameters
+    ----------
+    d : dict
+        Dictionary to convert.
+    *objects : iterable[Selection]
+        Selection objects corresponding to the axes of the array.
+    fill_value : numbers.Number
+        Value used for missing data.
+    dtype :
+        Data type of the resultant array.
+    squeezed : bool
+        If ``True`` and one selection object is provided, the keys of the dictionary are assumed to
+        be elements of the selection. If ``False``, the keys of the dictionary are assumed to be
+        tuples comprising elements of the selection ``objects`` (cf. :py:func:`array_to_dict`).
+
+    Returns
+    -------
+    x : np.ndarray
+        Array encoded by the dictionary of key-value pairs.
+
+    Example
+    -------
+    >>> cities = ['Rome', 'Berlin', 'Paris', 'London']
+    >>> population = {'Rome': 2.873, 'Berlin': 3.769, 'London': 8.982}
+    >>> idxhound.dict_to_array(population, idxhound.Selection(cities))
+    array([2.873, 3.769,   nan, 8.982])
+    """
+    # Create an array
+    shape = tuple(max(obj.values()) + 1 for obj in objects)
+    x = np.empty(shape, dtype)
+    x[...] = fill_value
+    # Transpose and map into the integer space
+    if squeezed and x.ndim == 1:
+        obj, = objects
+        idx = [obj[i] for i in d]
+    else:
+        idx = tuple(obj[i] for i, obj in zip(zip(*d), objects))
+    x[idx] = list(d.values())
+    return x
