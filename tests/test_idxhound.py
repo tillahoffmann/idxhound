@@ -92,3 +92,62 @@ def test_multiindex():
 def test_wrong_ndim():
     with pytest.raises(ValueError):
         idxhound.Selection(np.random.normal(size=(2, 2)))
+
+
+def test_array_to_dict():
+    x = np.random.normal(size=(2, 3))
+    obj1 = idxhound.Selection.from_iterable('ab')
+    obj2 = idxhound.Selection.from_iterable('xyz')
+    d = idxhound.array_to_dict(x, obj1, obj2)
+    assert d[('b', 'z')] == x[1, 2]
+
+
+def test_array_to_dict_wrong_ndim():
+    x = np.random.normal(size=(3, 4))
+    with pytest.raises(ValueError):
+        idxhound.array_to_dict(x)
+
+
+@pytest.mark.parametrize('squeeze', [True, False])
+def test_vector_to_dict(squeeze):
+    x = np.random.normal(size=3)
+    obj = idxhound.Selection.from_iterable('abc')
+    d = idxhound.array_to_dict(x, obj, squeeze=squeeze)
+
+    if squeeze:
+        assert x[2] == d['c']
+        for key in d:
+            assert isinstance(key, str)
+    else:
+        assert x[2] == d[('c',)]
+        for key in d:
+            assert isinstance(key, tuple)
+
+
+def test_dict_to_array():
+    obj1 = idxhound.Selection.from_iterable('ab')
+    obj2 = idxhound.Selection.from_iterable('xyz')
+    d = {
+        ('a', 'y'): 3,
+        ('b', 'z'): 4,
+    }
+    x = idxhound.dict_to_array(d, obj1, obj2)
+    np.testing.assert_array_equal(x, [
+        [np.nan, 3, np.nan],
+        [np.nan, np.nan, 4],
+    ])
+
+
+@pytest.mark.parametrize('shape', [
+    (4,),
+    (3, 8),
+    (9, 7, 13),
+])
+def test_dict_array_roundtrip(shape):
+    prefixes = 'abcdefg'
+    objects = [idxhound.Selection([f'{prefixes[i]}{j}' for j in range(size)])
+               for i, size in enumerate(shape)]
+    x = np.random.normal(size=shape)
+    d = idxhound.array_to_dict(x, *objects)
+    y = idxhound.dict_to_array(d, *objects)
+    np.testing.assert_array_equal(x, y)

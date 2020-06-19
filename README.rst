@@ -1,8 +1,8 @@
 🐶 idxhound
 ===========
 
-.. image:: https://github.com/tillahoffmann/idxhound/workflows/Python%20package/badge.svg
-  :target: https://github.com/tillahoffmann/idxhound/actions?query=workflow%3A%22Python+package%22
+.. image:: https://github.com/tillahoffmann/idxhound/workflows/CI/badge.svg
+  :target: https://github.com/tillahoffmann/idxhound/actions?query=workflow%3A%22CI%22
 
 .. image:: https://img.shields.io/pypi/v/idxhound.svg?style=flat-square
    :target: https://pypi.python.org/pypi/idxhound
@@ -43,6 +43,24 @@ Using the inverse of ``i`` allows us to retrieve the index of an element in ``x`
 >>> j = obj.inverse[1]
 >>> j, x[j], y[1]
 (4, 'e', 'e')
+
+Convenience functions
+^^^^^^^^^^^^^^^^^^^^^
+
+The functions :py:func:`dict_to_array` and :py:func:`array_to_dict` facilitate conversion from dictionaries to arrays and vice versa. This functionality is convenient for loading or saving data with non-integer keys. Suppose we are presented with a dictionary of city populations which we want to convert to an array for manipulation.
+
+>>> cities = ['Rome', 'Berlin', 'Paris', 'London']
+>>> population = {'Rome': 2.873, 'Berlin': 3.769, 'London': 8.982}
+>>> arr = idxhound.dict_to_array(population, idxhound.Selection(cities))
+>>> arr
+array([2.873, 3.769,   nan, 8.982])
+
+Converting back to an array yields the following.
+
+>>> idxhound.array_to_dict(arr, idxhound.Selection(cities))
+{'Rome': 2.873, 'Berlin': 3.769, 'Paris': nan, 'London': 8.982}
+
+The two convienence functions are applicable to arrays with an arbitrary number of dimensions.
 
 Advanced use
 ------------
@@ -99,8 +117,8 @@ Because :py:class:`idxhound.Selection` is agnostic to the dimensions of the tens
 >>> data[mapping['Berlin'], columns[['latitude', 'longitude']]]
 array([52.52 , 13.405])
 
-Properties
-----------
+Properties satisfied by ``Selection``
+-------------------------------------
 
 More formally, an :py:class:`idxhound.Selection` satisfies the following properties. Let ``x`` be a one-dimensional array, ``idx`` be a selection that can be applied to ``x``, ``y = x[idx]``, and ``obj = idxhound.Selection(idx)``. Then
 
