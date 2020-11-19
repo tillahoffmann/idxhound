@@ -1,4 +1,5 @@
 import idxhound
+import itertools as it
 import numpy as np
 import pytest
 
@@ -150,4 +151,26 @@ def test_dict_array_roundtrip(shape):
     x = np.random.normal(size=shape)
     d = idxhound.array_to_dict(x, *objects)
     y = idxhound.dict_to_array(d, *objects)
+    np.testing.assert_array_equal(x, y)
+
+
+@pytest.mark.parametrize('ignore, squeezed', it.product([True, False], [True, False]))
+def test_dict_array_missing_key(ignore, squeezed):
+    idx = idxhound.Selection.from_iterable('ac')
+    d = {'a': 1, 'b': 2, 'c': 3}
+    if not squeezed:
+        d = {(key,): value for key, value in d.items()}
+    if ignore:
+        x = idxhound.dict_to_array(d, idx, ignore_missing_keys=ignore, squeezed=squeezed)
+        np.testing.assert_array_equal(x, [1, 3])
+    else:
+        with pytest.raises(KeyError):
+            x = idxhound.dict_to_array(d, idx, ignore_missing_keys=ignore, squeezed=squeezed)
+
+
+def test_dict_array_roundtrip_instance_method():
+    idx = idxhound.Selection.from_iterable('abc')
+    x = np.random.normal(0, 1, 3)
+    d = idx.array_to_dict(x)
+    y = idx.dict_to_array(d)
     np.testing.assert_array_equal(x, y)
