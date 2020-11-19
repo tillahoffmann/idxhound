@@ -100,6 +100,40 @@ class Selection(bidict.FrozenOrderedBidict):
         """
         return cls([(x, i) for i, x in enumerate(keys)], mapping=True)
 
+    def array_to_dict(self, x, *args, **kwargs):
+        """
+        Convert an array to a dictionary of key-value pairs, using this instance as the first
+        selection object.
+
+        .. note::
+
+           See :py:func:`array_to_dict` for details.
+
+        Example
+        -------
+        >>> cities = idxhound.Selection(['Rome', 'Berlin', 'Paris', 'London'])
+        >>> population = [2.873, 3.769, 2.148, 8.982]
+        >>> cities.array_to_dict(population)
+        {'Rome': 2.873, 'Berlin': 3.769, 'Paris': 2.148, 'London': 8.982}
+        """
+        return array_to_dict(x, self, *args, **kwargs)
+
+    def dict_to_array(self, d, *args, **kwargs):
+        """
+        Convert a dictionary of key-value pairs to an array, using this instance as the first
+        selection object.
+
+        .. note::
+
+           See :py:func:`dict_to_array` for details.
+
+        >>> cities = idxhound.Selection(['Rome', 'Berlin', 'Paris', 'London'])
+        >>> population = {'Rome': 2.873, 'Berlin': 3.769, 'London': 8.982}
+        >>> cities.dict_to_array(population)
+        array([2.873, 3.769,   nan, 8.982])
+        """
+        return dict_to_array(d, self, *args, **kwargs)
+
 
 def array_to_dict(x, *objects, squeeze=True):
     """
@@ -141,7 +175,8 @@ def array_to_dict(x, *objects, squeeze=True):
     return dict(zip(idx, x.ravel()))
 
 
-def dict_to_array(d, *objects, fill_value=np.nan, dtype=None, squeezed=True):
+def dict_to_array(d, *objects, fill_value=np.nan, dtype=None, squeezed=True,
+                  ignore_missing_keys=False):
     """
     Convert a dictionary of key-value pairs to an array.
 
@@ -159,6 +194,9 @@ def dict_to_array(d, *objects, fill_value=np.nan, dtype=None, squeezed=True):
         If ``True`` and one selection object is provided, the keys of the dictionary are assumed to
         be elements of the selection. If ``False``, the keys of the dictionary are assumed to be
         tuples comprising elements of the selection ``objects`` (cf. :py:func:`array_to_dict`).
+    ignore_missing_keys : bool
+        If ``True``, keys in the dictionary that are not present in the selection objects are
+        silently dropped.
 
     Returns
     -------
@@ -176,11 +214,26 @@ def dict_to_array(d, *objects, fill_value=np.nan, dtype=None, squeezed=True):
     shape = tuple(max(obj.values()) + 1 for obj in objects)
     x = np.empty(shape, dtype)
     x[...] = fill_value
+
     # Transpose and map into the integer space
     if squeezed and x.ndim == 1:
         obj, = objects
-        idx = [obj[i] for i in d]
+        selector = lambda i: obj[i]  # noqa: E731
     else:
-        idx = tuple(obj[i] for i, obj in zip(zip(*d), objects))
-    x[idx] = list(d.values())
+        selector = lambda i: [obj[j] for j, obj in zip(i, objects)]  # noqa: E731
+
+    idx = []
+    values = []
+    for i, y in d.items():
+        try:
+            idx.append(selector(i))
+            values.append(y)
+        except KeyError:
+            if not ignore_missing_keys:
+                raise
+
+    # Assign the values
+    if not squeezed or x.ndim != 1:
+        idx = tuple(zip(*idx))
+    x[idx] = values
     return x
